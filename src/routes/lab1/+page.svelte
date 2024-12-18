@@ -1,6 +1,6 @@
 <script lang="ts">
 	let exAlph = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+'];
-	let exOutput = []
+	let exOutput = [];
 
 	interface Rule {
 		[key: string]: string[];
@@ -23,7 +23,38 @@
 
 	function generateChains(rules: Rule[], minChars: number, maxChars: number) {
 		let chains = ['S'];
-		
+		let output: string[] = [];
+
+		while (chains.length > 0) {
+			const chain = chains.shift() as string;
+			const newChains: string[] = [];
+
+			for (const rule of rules) {
+				for (const key in rule) {
+					if (chain.includes(key)) {
+						console.log(`key: ${key}`)
+						
+						const replacement = rule[key][Math.floor(Math.random() * rule[key].length)];
+						const newChain = chain.replace(key, replacement);
+						newChains.push(newChain);
+					}
+				}
+			}
+
+			if (newChains.length > 0) {
+				chains.push(...newChains);
+			} else {
+				if (chain.length >= minChars && chain.length <= maxChars) {
+					output.push(chain);
+				}
+			}
+
+			if (chains.every((chain) => chain.length > maxChars)) {
+				break;
+			}
+		}
+
+		return output;
 	}
 </script>
 
@@ -31,7 +62,7 @@
 	<h2 class="text-3xl font-bold">Лабораторная 1</h2>
 	<p class="text-2xl italic">Пример</p>
 
-	<div class='flex lg:flex-row flex-col gap-8'>
+	<div class="flex flex-col gap-8 lg:flex-row">
 		<div class="card w-96 bg-base-200 shadow-xl">
 			<div class="card-body">
 				<div class="card-title mb-2">Правила:</div>
@@ -54,15 +85,14 @@
 					{/each}
 				</div>
 				<div class="card-actions mt-4 justify-center">
-					<button class="btn btn-primary">Сгенерировать!</button>
+					<button class="btn btn-primary" on:click={generateChains(exRules, 3, 5)}>Сгенерировать!</button>
 				</div>
 			</div>
 		</div>
-		
+
 		<div class="card bg-base-200 shadow-xl">
 			<div class="card-body">
 				<div class="card-title mb-2">Вывод:</div>
-				
 			</div>
 		</div>
 	</div>
