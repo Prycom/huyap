@@ -1,7 +1,7 @@
 <script lang="ts">
-	let exAlph = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '+'];
-	let exOutput = [];
-
+	let exAlph = ['0', '1', '2', '-', '+'];
+	let exOutput: string[] = [];
+	let userOutput: string[] = [];
 	interface Rule {
 		[key: string]: string[];
 	}
@@ -14,58 +14,57 @@
 			T: ['F', 'TF']
 		},
 		{
-			F: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+			F: ['0', '1', '2']
 		}
 	];
 
-	let minChars = 3;
-	let maxChars = 5;
+	let userRules: Rule[] = [];
+	let userRuleKey: string = '';
+	let userRuleVariants: string = '';
 
 	function generateChains(rules: Rule[], minChars: number, maxChars: number) {
 		let chains: string[] = ['S'];
 		let output: string[] = [];
 
+		let keys: string[] = [];
+		rules.forEach((rule) => {
+			keys.push(Object.keys(rule)[0]);
+		});
+		console.log(keys);
+
 		while (chains.length > 0) {
 			let chain = chains.shift() as string; // get chain and delete it from chains
-			let newChains: string[] = [];
-			console.log(chains)
-			if (chain.length > maxChars){
-				console.log(`max chars for "${chain}"`)
-				continue
+
+			if (chain.length > maxChars) {
+				// chain will not be valid; skip
+				console.log(`max chars for "${chain}"`);
+				continue;
 			}
-			for (const rule of rules) { // get every rule object
-				for (const key in rule) { // get key of rule 
-					if (chain.includes(key)) { // if terminal in chain
-						//console.log(`key: ${key}; chain: ${chain}`)
-						// for every variant for particular key
-						for(const variant of rule[key]){
-							//console.log(`${variant}`)
-							const newChain = chain.replace(key, variant)
-							//console.log(`chain: ${chain}; new chain: ${newChain}`)
-							newChains.push(newChain)
-							//if (newChain.length >= minChars && newChain <= maxChars && !newChain.includes())
+			for (const rule of rules) {
+				// get every rule object
+				for (const key in rule) {
+					// get key of rule
+					if (chain.includes(key)) {
+						// if terminal in chain
+						// for every variant recombine chain
+						for (const variant of rule[key]) {
+							const newChain = chain.replace(key, variant);
+							console.log(`chain: ${chain}; new chain: ${newChain}`);
+							chains.push(newChain);
+							if (
+								newChain.length >= minChars &&
+								newChain.length <= maxChars &&
+								!keys.some((ruleKey) => newChain.includes(ruleKey))
+							) {
+								output.push(newChain);
+							}
 						}
 					}
 				}
 			}
-			if (chains.length > 100){
-				break
-			}
-			//console.log(newChains)
-			if (newChains.length > 0) {
-				chains.push(...newChains);
-				newChains = []
-			} else {
-				if (chain.length >= minChars && chain.length <= maxChars) {
-					output.push(chain);
-				}
-			}
-
-			if (chains.every((chain) => chain.length > maxChars)) {
-				break;
-			}
 		}
-
+		output = [...new Set(output)];
+		console.log(output);
 		return output;
 	}
 </script>
@@ -75,7 +74,7 @@
 	<p class="text-2xl italic">Пример</p>
 
 	<div class="flex flex-col gap-8 lg:flex-row">
-		<div class="card lg:w-96 bg-base-200 shadow-xl">
+		<div class="card bg-base-200 shadow-xl lg:w-1/2">
 			<div class="card-body">
 				<div class="card-title mb-2">Правила:</div>
 				{#each exRules as rule}
@@ -96,15 +95,102 @@
 						<div class="badge">{letter}</div>
 					{/each}
 				</div>
+				<div class="card-title mt-4">Ограничения:</div>
+				<p>От 2 до 3 символов</p>
 				<div class="card-actions mt-4 justify-center">
-					<button class="btn btn-primary" on:click={generateChains(exRules, 2, 3)}>Сгенерировать!</button>
+					<button
+						class="btn btn-primary"
+						on:click={() => {
+							exOutput = generateChains(exRules, 2, 3);
+						}}>Сгенерировать!</button
+					>
 				</div>
 			</div>
 		</div>
 
-		<div class="card bg-base-200 shadow-xl">
+		<div class="card bg-base-200 shadow-xl lg:w-1/2">
 			<div class="card-body">
 				<div class="card-title mb-2">Вывод:</div>
+				<div class="flex flex-wrap gap-1">
+					{#each exOutput as ex}
+						<div class="badge">{ex}</div>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</div>
+	<p class="text-2xl italic">Пользовательский ввод</p>
+
+	<div class="flex flex-col gap-8 lg:flex-row">
+		<div class="card bg-base-200 shadow-xl lg:w-1/2">
+			<div class="card-body">
+				<div class="card-title mb-2">Правила:</div>
+				{#each userRules as rule}
+					{#each Object.entries(rule) as [key, values]}
+						<div class="flex flex-wrap items-center justify-start gap-1">
+							<strong class="mr-4">{key} : </strong>
+							{#each values as variant}
+								<div class="badge">{variant}</div>
+							{/each}
+						</div>
+					{/each}
+				{/each}
+				<div class="flex w-full gap-4 border-t-2 border-base-300">
+					<div class="flex w-1/2 flex-col">
+						<label for="ruleName" class="">Название правила</label>
+						<input
+							type="text"
+							id="ruleName"
+							placeholder="Ну типо S"
+							class="input input-bordered w-full"
+							bind:value={userRuleKey}
+						/>
+					</div>
+					<div class="flex w-1/2 flex-col">
+						<label for="ruleTrans">Переходы правила</label>
+						<input
+							type="text"
+							id="ruleName"
+							placeholder="Добавляйте варианты через | вертикальную черту"
+							class="input input-bordered w-full"
+							bind:value={userRuleVariants}
+						/>
+					</div>
+				</div>
+				<button
+					class="btn btn-outline"
+					on:click={() => {
+						if (!userRuleKey || !userRuleVariants){
+							alert('Поля ruleKey и ruleVariants должны быть непустыми!')
+						}
+						let newRule = {
+							[userRuleKey]: userRuleVariants.split('|')
+						};
+						userRules = [...userRules, newRule];
+						console.log(userRuleKey);
+						userRuleKey = '';
+						userRuleVariants = '';
+					}}>Добавить правило</button
+				>
+				<div class="card-actions mt-4 justify-center">
+					<button
+						class="btn btn-primary"
+						on:click={() => {
+							userOutput = generateChains(exRules, 2, 3);
+						}}>Сгенерировать!</button
+					>
+				</div>
+			</div>
+		</div>
+
+		<div class="card bg-base-200 shadow-xl lg:w-1/2">
+			<div class="card-body">
+				<div class="card-title mb-2">Вывод:</div>
+				<div class="flex flex-wrap gap-1">
+					{#each userOutput as ex}
+						<div class="badge">{ex}</div>
+					{/each}
+				</div>
 			</div>
 		</div>
 	</div>
