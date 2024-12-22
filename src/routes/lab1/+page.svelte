@@ -21,6 +21,8 @@
 	let userRules: Rule[] = [];
 	let userRuleKey: string = '';
 	let userRuleVariants: string = '';
+	let minChars:number = 1;
+	let maxChars:number = 1;
 
 	function generateChains(rules: Rule[], minChars: number, maxChars: number) {
 		let chains: string[] = ['S'];
@@ -35,7 +37,7 @@
 		while (chains.length > 0) {
 			let chain = chains.shift() as string; // get chain and delete it from chains
 
-			if (chain.length > maxChars) {
+			if (chain.length > maxChars + 2) {
 				// chain will not be valid; skip
 				console.log(`max chars for "${chain}"`);
 				continue;
@@ -124,6 +126,16 @@
 	<div class="flex flex-col gap-8 lg:flex-row">
 		<div class="card bg-base-200 shadow-xl lg:w-1/2">
 			<div class="card-body">
+				<div class='card-title mb-2'>Скока:</div>
+				<div class='flex'>
+					<label for='minChars' class='w-1/2'>Мин символов</label>
+					<input id='minChars' type='number' class="input input-bordered w-1/2" min='1' bind:value={minChars}/>
+				</div>
+				<div class='flex'>
+					<label for='minChars' class='w-1/2'>Макс символов</label>
+					<input id='minChars' type='number' class="input input-bordered w-1/2" min={minChars} bind:value={maxChars}/>
+				</div>
+
 				<div class="card-title mb-2">Правила:</div>
 				{#each userRules as rule}
 					{#each Object.entries(rule) as [key, values]}
@@ -163,6 +175,9 @@
 						if (!userRuleKey || !userRuleVariants){
 							alert('Поля ruleKey и ruleVariants должны быть непустыми!')
 						}
+						if(minChars > maxChars){
+							alert('Ты чо, мин это мин, макс это макс')
+						}
 						let newRule = {
 							[userRuleKey]: userRuleVariants.split('|')
 						};
@@ -176,7 +191,13 @@
 					<button
 						class="btn btn-primary"
 						on:click={() => {
-							userOutput = generateChains(exRules, 2, 3);
+							if (!userRuleKey || !userRuleVariants){
+							alert('Поля ruleKey и ruleVariants должны быть непустыми!')
+							}
+							if(minChars > maxChars){
+								alert('Ты чо, мин это мин, макс это макс')
+							}
+							userOutput = generateChains(userRules, 2, 3);
 						}}>Сгенерировать!</button
 					>
 				</div>
