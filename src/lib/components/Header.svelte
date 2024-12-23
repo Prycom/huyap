@@ -39,6 +39,7 @@
 			<li><a href="/lab2">Лабораторная 2</a></li>
 			<li><a href="/lab3">Лабораторная 3</a></li>
 			<li><a href="/lab4">Лабораторная 4</a></li>
+			<li><a href="/lab4/su">Лабораторная 4 СУ</a></li>
 		</ul>
 		<h1><a class="btn btn-ghost text-xl lg:hidden flex" href="/">ТЯП</a></h1>
 	</div>
