@@ -64,6 +64,10 @@
 		let NONTERMINALS: string[] = ['S', 'A'];
 		NTsymbIdx = 1;
 		// create rules for substring
+        
+        
+        // ??????
+        let clearPath: boolean = true
 		for (let idx = 0; idx < subStr.length; idx++) {
 			let NT = NTsymbols[NTsymbIdx];
 			let ch = subStr[idx];
@@ -71,22 +75,48 @@
 			if (!idx) {
 				// create first rule; always S
 				rules['S'] = [`${ch}${NT}`];
-			} else if (idx !== subStr.length - 1) {
+
+			} else if (idx !== subStr.length - 1) { // create path to end substring
 				rules[NT] = [`${ch}${NTsymbols[NTsymbIdx + 1]}`];
-				NTsymbIdx += 1;
-				NONTERMINALS.push(NT);
-			} else {
+				
+                // ?????
+                console.log(subStr[idx] !== subStr[idx-1], subStr[idx], subStr[idx-1])
+                if (subStr[idx] !== subStr[idx-1]){
+                    if (clearPath){
+                        rules[NT].push(`${subStr[idx-1]}${NT}`)
+                        clearPath = false
+                        console.log(rules)
+                    } 
+                }
+
+                NTsymbIdx += 1;
+                NONTERMINALS.push(NT);
+
+			} else { // ending of substring
 				rules[NT] = [`${ch}A`];
+
+                // ?????
+                if (subStr[idx] !== subStr[idx-1]){
+                    if (clearPath){
+                        rules[NT].push(`${subStr[idx-1]}${NT}`)
+                        clearPath = false
+                        console.log(rules)
+                    } 
+                }
+
 				NONTERMINALS.push(NT);
 			}
 		}
 		// generate rules for backing to S (start state)
 		for (let VN in rules) {
 			for (let char of alphavit) {
-				if (!rules[VN][0].includes(char)) {
+				if ( !rules[VN].some( (variant) => variant.includes(char)) ) rules[VN].push(`${char}S`);
+                /*
+                if (!rules[VN][0].includes(char)) {
 					// rules[VN][0] - only element;
 					rules[VN].push(`${char}S`);
 				}
+                */
 			}
 		}
 		// generate A rule (for ending state)
@@ -101,7 +131,7 @@
 			S: 'S',
 			P: rules
 		};
-		console.log(gram);
+		// console.log(gram);
 		return gram;
 	}
 
@@ -125,8 +155,8 @@
 		let remainder = 0;
 
 		for (let VN of gram.VN) {
-			console.log('Current rule:', VN);
-			console.log(gram.P[VN]);
+			// console.log('Current rule:', VN);
+			// console.log(gram.P[VN]);
 			for (let idx = 0; idx < mult; idx++) {
 				let currentState = `q_${VN}_${idx}`; // calc current state
 				
@@ -166,7 +196,8 @@
                 logs = [...logs, `Переход из ${currentState} в ${nextState} по символу ${char}`]
                 currentState = nextState
             }else{
-                logs = [...logs, `Символ ${char} не входит в алфавт ${dka.V}`]
+                logs = [...logs, `[!] ОШИБКА! Символ ${char} не входит в алфавит ${dka.V}`]
+                break
             }
         }
         let data: string[] = currentState.split('_')
@@ -201,8 +232,12 @@
 					<button
 						class="btn h-12 w-12 rounded bg-base-300"
 						on:click={() => {
-							userAlphavit = [...userAlphavit, userChar];
-							userChar = '';
+                            if (userAlphavit.includes(userChar)){
+                                alert('Символы алфавита должны быть уникальными!')
+                            }else{
+                                userAlphavit = [...userAlphavit, userChar];
+                                userChar = '';
+                            }
 						}}>+</button
 					>
 				</div>
@@ -332,14 +367,13 @@
 					bind:value={userInput}
                     on:input={
                         () => {
-                            console.log(userInput, userDKA)
                             if(userDKA && userInput) checkChain(userDKA, userInput)
                         }
                     }
 				/>
                 <div class='flex flex-col gap-2 border-dotted border-base-300 rounded'>
                     {#each logs as log}
-                        <p class='font-semibold italic underline'>{log}</p>
+                        <p class='font-semibold italic '>{log}</p>
                     {/each}
                 </div>
 			</div>
